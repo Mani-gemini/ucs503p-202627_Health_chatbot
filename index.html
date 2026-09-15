@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot: AI Disease Awareness</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Disclaimer Banner -->
+    <div class="disclaimer-banner">
+        <i class="ph ph-warning-circle"></i>
+        <span>This is a health-awareness tool, not a diagnostic service. In an emergency, contact a doctor or emergency services immediately.</span>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-info">
+                <div class="logo">
+                    <i class="ph ph-heartbeat"></i>
+                </div>
+                <div class="header-text">
+                    <h1>HealthBot</h1>
+                    <p>Verified health information, safely.</p>
+                </div>
+            </div>
+            <button class="btn-emergency" id="headerEmergencyBtn">
+                <i class="ph ph-siren"></i>
+                Emergency
+            </button>
+        </header>
+
+        <!-- Quick Services -->
+        <section class="quick-services">
+            <button class="service-card tint-teal" data-query="I need to check my symptoms">
+                <i class="ph ph-stethoscope"></i>
+                <span>Symptom Checker</span>
+            </button>
+            <button class="service-card tint-blue" data-query="Tell me about a disease">
+                <i class="ph ph-virus"></i>
+                <span>Disease Info</span>
+            </button>
+            <button class="service-card tint-green" data-query="How can I prevent a disease?">
+                <i class="ph ph-shield-check"></i>
+                <span>Prevention Tips</span>
+            </button>
+            <button class="service-card tint-orange" data-query="I want general medicine info">
+                <i class="ph ph-pill"></i>
+                <span>Medicine Info</span>
+                <small>general info only</small>
+            </button>
+            <button class="service-card tint-purple" data-query="Find a nearby hospital">
+                <i class="ph ph-map-pin"></i>
+                <span>Find Nearby Hospital</span>
+            </button>
+            <button class="service-card tint-red" onclick="window.openEmergencyModal()">
+                <i class="ph ph-warning-circle"></i>
+                <span>Emergency Help</span>
+            </button>
+        </section>
+
+        <!-- Chat Area -->
+        <main class="chat-container" id="chatContainer">
+            <!-- Initial Greeting -->
+            <div class="message bot-message">
+                <div class="avatar"><i class="ph ph-robot"></i></div>
+                <div class="message-content">
+                    <p>Hello. I'm HealthBot. I can provide verified information regarding disease symptoms, prevention, and general guidance. How can I help you today?</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="suggested-chips" id="suggestedChips">
+                <button class="chip">Dengue symptoms</button>
+                <button class="chip">How is TB spread?</button>
+                <button class="chip">Diabetes prevention tips</button>
+            </div>
+            
+            <form class="input-form" id="chatForm">
+                <button type="button" class="btn-voice" id="voiceBtn" title="Use Voice Input">
+                    <i class="ph ph-microphone"></i>
+                </button>
+                <input type="text" id="chatInput" placeholder="Ask about a disease, symptom, or prevention..." autocomplete="off" />
+                <button type="submit" class="btn-send" id="sendBtn" disabled>
+                    <i class="ph ph-paper-plane-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Emergency Modal -->
+    <div class="modal-overlay" id="emergencyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="ph ph-warning-circle text-danger"></i> Do you need emergency help right now?</h2>
+                <p>If you or someone else is experiencing a severe medical emergency, please get immediate professional help.</p>
+            </div>
+            
+            <div id="modalTriageView">
+                <p class="triage-question">What kind of help do you need?</p>
+                <div class="triage-options">
+                    <button class="btn-triage" data-type="ambulance">Medical Emergency</button>
+                    <button class="btn-triage" data-type="ambulance">Injury / Accident</button>
+                    <button class="btn-triage" data-type="mental">Mental Health Crisis</button>
+                    <button class="btn-triage" data-type="poison">Poisoning</button>
+                    <button class="btn-triage" data-type="police">Not Sure — Just Connect Me</button>
+                </div>
+                <div class="voice-prompt-container">
+                    <button type="button" class="btn-voice modal-voice" id="modalVoiceBtn" title="Use Voice Input">
+                        <i class="ph ph-microphone"></i>
+                    </button>
+                    <span>Or just say what's happening</span>
+                </div>
+            </div>
+
+            <div id="modalContactsView" style="display: none;">
+                <div class="emergency-cards-list" id="emergencyCardsList">
+                    <a href="tel:108" class="e-card e-ambulance" id="card-ambulance">
+                        <div class="e-card-left">
+                            <i class="ph ph-ambulance"></i>
+                            <span>Call Ambulance</span>
+                        </div>
+                        <div class="e-card-right">108</div>
+                    </a>
+                    
+                    <a href="tel:100" class="e-card e-police" id="card-police">
+                        <div class="e-card-left">
+                            <i class="ph ph-shield-check"></i>
+                            <span>Call Police</span>
+                        </div>
+                        <div class="e-card-right">100</div>
+                    </a>
+
+                    <a href="tel:1066" class="e-card e-poison" id="card-poison">
+                        <div class="e-card-left">
+                            <i class="ph ph-prescription"></i>
+                            <span>Poison Control</span>
+                        </div>
+                        <div class="e-card-right">1066</div>
+                    </a>
+
+                    <a href="tel:14416" class="e-card e-mental" id="card-mental">
+                        <div class="e-card-left">
+                            <i class="ph ph-heart"></i>
+                            <span>Mental Health Helpline</span>
+                        </div>
+                        <div class="e-card-right">14416</div>
+                    </a>
+                </div>
+
+                <div class="location-note">
+                    <i class="ph ph-map-pin"></i>
+                    <p>If you can, share your location with the ambulance service or a nearby person.</p>
+                </div>
+            </div>
+
+            <button class="btn-close-modal" id="closeModalBtn">I don't need this right now</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

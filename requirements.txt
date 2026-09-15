@@ -1,0 +1,6 @@
+PyMuPDF
+python-docx
+python-dotenv
+chromadb
+sentence-transformers
+langchain-text-splitters
