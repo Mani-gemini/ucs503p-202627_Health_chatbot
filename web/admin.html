@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/vendor/phosphor/style.css">
+    <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <div class="brand">
+                <div class="logo"><i class="ph ph-heartbeat"></i></div>
+                <div class="brand-text">
+                    <h1>HealthBot Admin</h1>
+                    <p>Knowledge base and query log</p>
+                </div>
+            </div>
+            <a class="back-link" href="/"><i class="ph ph-arrow-left"></i> Back to chatbot</a>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <section class="card login-card" id="login">
+            <h2><i class="ph ph-lock-key"></i> Admin sign in</h2>
+            <p class="muted">Enter the ADMIN_TOKEN you set when starting the server.</p>
+            <div class="row">
+                <label for="token" class="sr">Admin token</label>
+                <input id="token" type="password" placeholder="Admin token" autocomplete="off">
+                <button class="btn primary" id="unlock" type="button">Unlock</button>
+            </div>
+            <div id="loginStatus" class="status"></div>
+        </section>
+
+        <div id="dash" class="hidden">
+            <section class="card">
+                <h2><i class="ph ph-chart-bar"></i> Usage (Data Store D2)</h2>
+                <div id="stats" class="stats"></div>
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>#</th><th>Time</th><th>Question</th><th>Path</th><th>Distance</th></tr></thead>
+                        <tbody id="logRows"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2><i class="ph ph-virus"></i> Diseases in the knowledge base</h2>
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>Key</th><th>Name</th><th></th></tr></thead>
+                        <tbody id="diseaseRows"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2><i class="ph ph-plus-circle"></i> Add or update a disease</h2>
+                <p class="muted">
+                    Give a key (lowercase, e.g. <code>cholera</code>) and the entry as JSON. Required fields:
+                    <code>name</code>, <code>source</code>, plus at least one content field such as
+                    <code>key_facts</code> or <code>symptoms</code>. Saving re-embeds only this disease, and the
+                    chatbot can use it immediately.
+                </p>
+                <div class="row gap-bottom">
+                    <label for="key" class="sr">Disease key</label>
+                    <input id="key" type="text" placeholder="disease key, e.g. cholera" maxlength="40">
+                    <button class="btn" id="template" type="button">Insert template</button>
+                </div>
+                <label for="entry" class="sr">Entry JSON</label>
+                <textarea id="entry" class="json" spellcheck="false"></textarea>
+                <div class="row gap-top">
+                    <button class="btn primary" id="save" type="button"><i class="ph ph-floppy-disk"></i> Save and re-index</button>
+                </div>
+                <div id="saveStatus" class="status"></div>
+            </section>
+        </div>
+    </main>
+    <script src="/static/admin.js"></script>
+</body>
+</html>

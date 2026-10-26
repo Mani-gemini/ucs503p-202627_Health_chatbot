@@ -1,211 +1,156 @@
-# AI Medical Chatbot
+# HealthBot AI: AI-Driven Public Health Chatbot for Disease Awareness
 
-A modular AI medical chatbot with a Knowledge Base Builder and Embedding + Vector Database backend.
+A modular, verified AI health-awareness chatbot engineered with Knowledge Base Ingestion, Vector Database Semantic Search, Safety/Emergency Escalation Guardrails, Groq-powered RAG Response Generation, and a FastAPI Delivery Backend with an Admin Dashboard.
+
+Project for **UCS503P** — *Thapar Institute of Engineering and Technology*.
 
 ---
 
 ## Project Structure
 
 ```
-ai chatbot/
-├── index.html                      # Frontend UI
-├── style.css                       # Frontend styles
-├── app.js                          # Frontend logic
+ucs503p-202627_Health_chatbot/
+├── assets/                         # Static assets and icons
+│   ├── icons/                      # Icon sets
+│   ├── stylesheets/                # Custom stylesheets
+│   └── vendor/phosphor/            # Phosphor web fonts and CSS
+│
+├── backend/                        # Backend intelligence & server
+│   ├── pipeline.py                 # Core RAG Brain: safety gate + vector retrieval + Groq LLM + SQLite logging
+│   ├── server.py                   # FastAPI application (Chat API, Admin API, static delivery)
+│   ├── ingest.py                   # Ingests & embeds disease dataset into ChromaDB (PubMedBERT)
+│   ├── calibrate.py                # Calculates cosine distance threshold for out-of-scope filtering
+│   ├── query.py                    # Direct CLI semantic retrieval tool
+│   ├── generate.py                 # Direct CLI question-answering tool
+│   ├── embeddings/                 # Module 2: Embedding + Vector Database
+│   │   ├── embedding_model.py      # Sentence-Transformer wrapper
+│   │   ├── vector_store.py         # ChromaDB vector store wrapper
+│   │   ├── index_documents.py      # Chunks indexing script
+│   │   └── retriever.py            # Standalone retriever
+│   ├── knowledge_base/             # Module 1: Knowledge Base Builder
+│   │   ├── document_loader.py      # Document extraction (PDF, DOCX, TXT)
+│   │   ├── text_cleaner.py         # Text cleaner and normalizer
+│   │   ├── chunker.py              # Recursive text chunker
+│   │   └── build_knowledge_base.py # Chunker builder
+│   └── tests/
+│       ├── test_pipeline.py        # Automated unit tests for modules 1 & 2
+│       └── run_tests.py            # Automated test runner (25+ test cases for RAG + emergency safety)
+│
+├── data/                           # Knowledge datasets
+│   ├── FINAL_DATASET.json          # Verified medical disease dataset from WHO/CDC
+│   ├── raw/                        # Raw health source documents
+│   └── processed/                  # Processed knowledge chunks (JSONL)
+│
+├── docs/                           # Documentation & test reports
+│   └── test_results.csv            # Automated evaluation matrix with latency, pass/fail status
+│
+├── journals/                       # Student weekly learning journals
+├── project-proposal/               # UCS503P project proposal LaTeX source & PDF
+├── project-report-final/           # Final project report
+├── project-report-prototype-stage/ # Prototype stage report
+│
+├── web/                            # Full-featured web application
+│   ├── index.html                  # Chat interface with audio mode, voice input & emergency ribbon
+│   ├── style.css                   # Responsive application stylesheets
+│   ├── healthbot.js                # Frontend client logic & TTS integration
+│   ├── admin.html                  # Admin analytics and query log dashboard
+│   ├── admin.css                   # Admin dashboard styles
+│   ├── admin.js                    # Admin dashboard logic
+│   └── vendor/phosphor/            # Phosphor web icons
+│
 ├── requirements.txt                # Python dependencies
-├── .env.example                    # Example environment config
-│
-├── data/
-│   ├── raw/                        # Place raw medical documents here (PDF, DOCX, TXT)
-│   └── processed/                  # Auto-generated chunked data (JSONL)
-│
-├── vector_db/
-│   └── chroma/                     # Persisted ChromaDB vector database
-│
-└── backend/
-    ├── knowledge_base/             # Module 1: Knowledge Base Builder
-    │   ├── document_loader.py      # Load PDF, DOCX, TXT files
-    │   ├── text_cleaner.py         # Clean and normalize extracted text
-    │   ├── chunker.py              # Split text into RAG-friendly chunks
-    │   └── build_knowledge_base.py # ← Run this for Module 1
-    │
-    ├── embeddings/                 # Module 2: Embedding + Vector Database
-    │   ├── embedding_model.py      # Sentence-Transformer wrapper
-    │   ├── vector_store.py         # ChromaDB interface
-    │   ├── index_documents.py      # ← Run this for Module 2
-    │   └── retriever.py            # Standalone search/retrieval function
-    │
-    └── tests/
-        └── test_pipeline.py        # Automated tests for both modules
+├── .env.example                    # Example environment variables
+└── README.md                       # Project documentation
 ```
 
 ---
 
-## Setup
+## Architecture Overview
 
-### 1. Install Python Dependencies
+```
+User Query (Chat UI / API)
+        │
+        ▼
+Safety & Escalation Layer (pipeline.py)
+   ├── Emergency / Acute Symptoms Check ──► Emergency Escalation (112 / 108 / nearest ER)
+   ├── Self-Harm / Crisis Check         ──► Crisis Help (Tele-MANAS: 14416 / 1800-891-4416)
+   │
+   ▼ (Safe query)
+ChromaDB Vector Retrieval (PubMedBERT Embeddings)
+   │
+   ▼
+Relevance Gate (Cosine Distance Threshold)
+   ├── Distance > Threshold ──► Fallback: "No verified information — please consult a doctor"
+   │
+   ▼ (Grounded context)
+Groq LLM Generation (Strict Grounding Prompt)
+   │
+   ▼
+Response Formatting (WHO/CDC Sources + Medical Disclaimer)
+   │
+   ▼
+Audit & SQLite Query Log (query_log.db)
+```
+
+---
+
+## Setup & Installation
+
+### 1. Clone & Set Up Virtual Environment
 
 ```bash
+git clone https://github.com/Mani-gemini/ucs503p-202627_Health_chatbot.git
+cd ucs503p-202627_Health_chatbot
+
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Environment Variables
 
-Copy the example environment file and customize:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your preferred settings:
-
-```env
-EMBEDDING_MODEL=all-MiniLM-L6-v2
-CHROMA_PATH=vector_db/chroma
-COLLECTION_NAME=medical_knowledge
-DATA_RAW_DIR=data/raw
-DATA_PROCESSED_DIR=data/processed
-```
-
----
-
-## Module 1 — Knowledge Base Builder
-
-**Purpose:** Load medical documents → clean text → split into chunks → save as JSONL.
-
-### Step 1: Add your medical documents
-
-Place your PDF, DOCX, or TXT files in:
-
-```
-data/raw/
-```
-
-### Step 2: Run the pipeline
+Create `.env` (or set environment variables in your terminal):
 
 ```bash
-python3 backend/knowledge_base/build_knowledge_base.py
+export GROQ_API_KEY="your-groq-api-key"
+export ADMIN_TOKEN="choose-a-secure-secret-for-admin"
 ```
 
-**Output:** `data/processed/medical_chunks.jsonl`
-
-Each chunk contains:
-- `chunk_id` — Unique UUID
-- `text` — The chunk content
-- `metadata.source` — Source filename
-- `metadata.extension` — File extension
-- `metadata.chunk_index` — Position within the document
+Optional settings:
+- `RELEVANCE_THRESHOLD`: Cosine distance threshold (default calibrated to `50.014`).
+- `GROQ_MODEL`: LLM model (default `openai/gpt-oss-120b`).
+- `RATE_LIMIT_PER_MIN`: Rate limit for `/api/ask` (default `15`).
 
 ---
 
-## Module 2 — Embedding + Vector Database
+## Running the Application
 
-**Purpose:** Embed chunks → store in ChromaDB → enable semantic search.
-
-### Step 1: Ensure Module 1 has been run first
+### Start the FastAPI Server
 
 ```bash
-# Check that this file exists:
-data/processed/medical_chunks.jsonl
+uvicorn backend.server:app --reload --port 8000
 ```
+*(Or simply `uvicorn server:app --reload` from the root directory)*
 
-### Step 2: Index the chunks
+Open in your browser:
+- **Chat Interface:** [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- **Admin Dashboard:** [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
+- **Interactive Swagger Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
+
+## Running Automated Tests
+
+Run the full end-to-end evaluation suite (tests 25+ medical, emergency, and out-of-scope queries):
 
 ```bash
-python3 backend/embeddings/index_documents.py
+python backend/tests/run_tests.py
 ```
 
-**Output:** Chunks are stored in `vector_db/chroma/` (persisted locally).
+The script evaluates:
+1. **Medical Knowledge Accuracy:** Queries on Dengue, Malaria, Tuberculosis, Diabetes, Typhoid, etc.
+2. **Emergency Escalation:** Rapid redirection for severe emergencies without making LLM calls.
+3. **Self-Harm Protection:** Sensitive helpline escalation (Tele-MANAS).
+4. **Out-of-Scope Fallback:** Rejecting irrelevant queries (cricket, cooking, coding) safely.
 
-Running this script again is safe — it uses upsert to avoid duplicates.
-
----
-
-## Running Tests
-
-Run all 7 automated tests (from the project root):
-
-```bash
-python3 backend/tests/test_pipeline.py
-```
-
-Tests verify:
-1. A medical document can be loaded
-2. Text is cleaned correctly
-3. Document is split into chunks
-4. Chunks contain correct metadata
-5. Embeddings are generated successfully
-6. Chunks are inserted into ChromaDB
-7. Query `"What are the common symptoms of diabetes?"` returns relevant results
-
----
-
-## Example Retrieval
-
-You can use the retriever directly in Python:
-
-```python
-import sys
-sys.path.append("backend/embeddings")
-
-from retriever import MedicalRetriever
-
-retriever = MedicalRetriever()
-results = retriever.retrieve("What are the symptoms of diabetes?", top_k=3)
-
-for i, res in enumerate(results):
-    print(f"Result {i+1}: {res['text'][:200]}")
-    print(f"Source: {res['metadata']['source']}")
-    print(f"Distance: {res['distance']}")
-```
-
----
-
-## Architecture
-
-```
-Medical PDFs/DOCS/TXTs
-        ↓
-Module 1: Knowledge Base Builder
-  (document_loader → text_cleaner → chunker)
-        ↓
-data/processed/medical_chunks.jsonl
-        ↓
-Module 2: Embedding + Vector Database
-  (embedding_model → vector_store)
-        ↓
-ChromaDB (vector_db/chroma/)
-        ↓
-retriever.py  ← Module 4 (RAG + LLM) will connect here
-```
-
----
-
-## Connecting Module 4 (RAG + LLM) Later
-
-When you are ready to implement the RAG pipeline:
-
-1. Import `MedicalRetriever` from `backend/embeddings/retriever.py`
-2. Call `retriever.retrieve(user_query, top_k=3)` to get relevant chunks
-3. Pass the retrieved chunk texts as context to your LLM prompt
-4. The LLM generates a grounded medical response
-
-```python
-# Future Module 4 example:
-context_chunks = retriever.retrieve(user_query, top_k=3)
-context = "\n\n".join([c["text"] for c in context_chunks])
-prompt = f"Using this medical context:\n{context}\n\nAnswer: {user_query}"
-# → send prompt to LLM
-```
-
----
-
-## Dependencies
-
-| Package | Purpose |
-|---|---|
-| `PyMuPDF` | Extract text from PDF files |
-| `python-docx` | Extract text from DOCX files |
-| `langchain-text-splitters` | Recursive text chunking |
-| `sentence-transformers` | Local embedding model (`all-MiniLM-L6-v2`) |
-| `chromadb` | Local vector database |
-| `python-dotenv` | Environment variable management |
+Results are saved to: `docs/test_results.csv`.

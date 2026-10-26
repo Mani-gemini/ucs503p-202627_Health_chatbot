@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,35 +8,50 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="vendor/phosphor/style.css">
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
+
 <body>
 
     <!-- Disclaimer Banner -->
     <div class="disclaimer-banner">
         <i class="ph ph-warning-circle"></i>
-        <span>This is a health-awareness tool, not a diagnostic service. In an emergency, contact a doctor or emergency services immediately.</span>
+        <span>This is a health-awareness tool, not a diagnostic service. In an emergency, contact a doctor or emergency
+            services immediately.</span>
     </div>
 
     <!-- Main App Container -->
     <div class="app-container">
-        <!-- Header -->
+        <!-- Header (Permanent Ribbon) -->
         <header class="app-header">
-            <div class="header-info">
-                <div class="logo">
-                    <i class="ph ph-heartbeat"></i>
-                </div>
-                <div class="header-text">
-                    <h1>HealthBot</h1>
-                    <p>Verified health information, safely.</p>
+            <div class="header-left">
+                <!-- Home/Back Button -->
+                <button class="btn-nav" id="homeBtn" title="Go Back">
+                    <i class="ph ph-arrow-left"></i>
+                </button>
+                
+                <div class="header-info">
+                    <div class="logo">
+                        <i class="ph ph-heartbeat"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>HealthBot</h1>
+                        <p>Verified health information, safely.</p>
+                    </div>
                 </div>
             </div>
-            <button class="btn-emergency" id="headerEmergencyBtn">
-                <i class="ph ph-siren"></i>
-                Emergency
-            </button>
+            
+            <div class="header-right">
+                <button class="btn-audio-mode" id="audioModeBtn" title="Audio Mode OFF">
+                    <i class="ph ph-speaker-simple-none"></i>
+                </button>
+                <button class="btn-emergency" id="headerEmergencyBtn">
+                    <i class="ph ph-siren"></i>
+                    Emergency
+                </button>
+            </div>
         </header>
 
         <!-- Quick Services -->
@@ -57,11 +73,11 @@
                 <span>Medicine Info</span>
                 <small>general info only</small>
             </button>
-            <button class="service-card tint-purple" data-query="Find a nearby hospital">
+            <button class="service-card tint-purple" id="findHospitalBtn">
                 <i class="ph ph-map-pin"></i>
                 <span>Find Nearby Hospital</span>
             </button>
-            <button class="service-card tint-red" onclick="window.openEmergencyModal()">
+            <button class="service-card tint-red" id="emergencyHelpCard">
                 <i class="ph ph-warning-circle"></i>
                 <span>Emergency Help</span>
             </button>
@@ -73,7 +89,8 @@
             <div class="message bot-message">
                 <div class="avatar"><i class="ph ph-robot"></i></div>
                 <div class="message-content">
-                    <p>Hello. I'm HealthBot. I can provide verified information regarding disease symptoms, prevention, and general guidance. How can I help you today?</p>
+                    <p>Hello. I'm HealthBot. I can provide verified information regarding disease symptoms, prevention,
+                        and general guidance. How can I help you today?</p>
                 </div>
             </div>
         </main>
@@ -85,12 +102,13 @@
                 <button class="chip">How is TB spread?</button>
                 <button class="chip">Diabetes prevention tips</button>
             </div>
-            
+
             <form class="input-form" id="chatForm">
                 <button type="button" class="btn-voice" id="voiceBtn" title="Use Voice Input">
                     <i class="ph ph-microphone"></i>
                 </button>
-                <input type="text" id="chatInput" placeholder="Ask about a disease, symptom, or prevention..." autocomplete="off" />
+                <input type="text" id="chatInput" placeholder="Ask about a disease, symptom, or prevention..."
+                    autocomplete="off" />
                 <button type="submit" class="btn-send" id="sendBtn" disabled>
                     <i class="ph ph-paper-plane-right"></i>
                 </button>
@@ -102,10 +120,16 @@
     <div class="modal-overlay" id="emergencyModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="ph ph-warning-circle text-danger"></i> Do you need emergency help right now?</h2>
-                <p>If you or someone else is experiencing a severe medical emergency, please get immediate professional help.</p>
+                <button class="btn-modal-back" id="modalBackBtn" title="Back">
+                    <i class="ph ph-arrow-left"></i>
+                </button>
+                <div class="modal-header-text">
+                    <h2><i class="ph ph-warning-circle text-danger"></i> Do you need emergency help right now?</h2>
+                    <p>If you or someone else is experiencing a severe medical emergency, please get immediate professional
+                        help.</p>
+                </div>
             </div>
-            
+
             <div id="modalTriageView">
                 <p class="triage-question">What kind of help do you need?</p>
                 <div class="triage-options">
@@ -132,7 +156,7 @@
                         </div>
                         <div class="e-card-right">108</div>
                     </a>
-                    
+
                     <a href="tel:100" class="e-card e-police" id="card-police">
                         <div class="e-card-left">
                             <i class="ph ph-shield-check"></i>
@@ -169,6 +193,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <script src="healthbot.js?v=3"></script>
 </body>
+
 </html>

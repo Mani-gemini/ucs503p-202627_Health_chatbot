@@ -31,11 +31,17 @@
     box-sizing: border-box;
 }
 
+html {
+    height: 100%;
+    overflow: hidden; /* stop the whole page/document from scrolling on any device */
+}
+
 body {
     font-family: 'Inter', system-ui, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     height: 100vh;
+    height: 100dvh; /* use the real visible viewport height on mobile, where 100vh can be taller than what's on screen */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -86,6 +92,48 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--header-bg);
     color: white;
     z-index: 5;
+    flex-shrink: 0; /* Ensures the header is constantly pinned and never shrinks */
+
+    /* Safety net: even if a parent ever ends up scrollable, the header
+       (and its back button) stays glued to the top of the screen. */
+    position: sticky;
+    top: 0;
+}
+
+/* New Header Layout and Button Styles */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-nav {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    
+    /* Keep space reserved but hide it initially */
+    display: flex; 
+    visibility: hidden; 
+    opacity: 0;
+    
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.btn-nav:active {
+    transform: scale(0.95);
 }
 
 .header-info {
@@ -137,6 +185,46 @@ h1, h2, h3, h4, h5, h6 {
 .btn-emergency:hover {
     background: linear-gradient(135deg, #B91C1C, #EA580C);
     transform: scale(1.05);
+}
+
+/* Header right group (audio toggle + emergency) */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Audio Mode Toggle Button */
+.btn-audio-mode {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.65);
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.btn-audio-mode:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: scale(1.05);
+}
+.btn-audio-mode.active {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+    color: white;
+    animation: audio-pulse 2s infinite;
+}
+@keyframes audio-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
 }
 
 @keyframes pulse {
@@ -493,7 +581,50 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .modal-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 24px;
+}
+
+.modal-header-text {
+    flex: 1;
+}
+
+/* Back button inside the emergency modal (triage -> contacts step) */
+.btn-modal-back {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+
+    /* Keep space reserved but hide it until a step actually has a "back" target */
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-modal-back.is-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.btn-modal-back:hover {
+    background-color: var(--border);
+    transform: scale(1.05);
+}
+
+.btn-modal-back:active {
+    transform: scale(0.95);
 }
 
 .modal-header h2 {
@@ -650,6 +781,11 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--danger);
     border-color: var(--danger);
     animation: voice-pulse 1.5s infinite;
+}
+.btn-voice.listening:hover {
+    background-color: rgba(220, 38, 38, 0.08);
+    color: var(--danger);
+    border-color: var(--danger);
 }
 @keyframes voice-pulse {
     0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
@@ -831,3 +967,32 @@ h1, h2, h3, h4, h5, h6 {
         padding: 16px;
     }
 }
+
+/* ===== Added for backend integration (existing rules above are untouched) ===== */
+/* Real answers can contain bullet lists, so the bot reply bubble is a div, styled like the old <p> bubble */
+.answer-bubble {
+    padding: 14px 18px;
+    border-radius: var(--radius-lg);
+    border-top-left-radius: 4px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background-color: white;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.bot-message .message-content .answer-bubble p {
+    margin: 0 0 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+.answer-bubble ul, .answer-bubble ol { margin: 0 0 8px; padding-left: 20px; }
+.answer-bubble > :last-child { margin-bottom: 0; }
+
+/* Server-written emergency text (lists) inside your emergency card */
+.emergency-body ul, .emergency-body ol { margin: 0 0 16px; padding-left: 20px; font-size: 0.95rem; color: var(--text-main); }
+.emergency-body li { margin-bottom: 4px; }
+.emergency-body p { margin-bottom: 10px !important; }
