@@ -128,11 +128,11 @@ def check_emergency(query):
         return "medical"
     if _any(SERIOUS, q):
         urgent = _any(URGENT, q)
-        informational = q.startswith(INFO_STARTS) or _any(INFO_PHRASES, q)
-        if informational and not q.startswith(("i ", "i'm", "my ")):
-            return None          # textbook question, e.g. "what are the symptoms of stroke"
         if urgent:
             return "medical"
+        informational = q.startswith(INFO_STARTS) or _any(INFO_PHRASES, q)
+        if informational:
+            return None          # textbook question, e.g. "what are the symptoms of stroke"
     return None
 
 
@@ -192,6 +192,61 @@ def retrieve_chunks(query):
 
 
 # --------------------------------------------------------------- generation --
+KNOWN_DISEASE_TERMS = [
+    "yellow fever", "high blood pressure", "fungal diseases", "fungal disease",
+    "dengue", "malaria", "typhoid", "tuberculosis", "tb", "diabetes",
+    "influenza", "flu", "chikungunya", "hypertension", "asthma",
+    "anemia", "stroke", "plague", "hiv", "aids"
+]
+
+
+def _heuristic_contextualize(query, history):
+    """Fallback contextualizer if the LLM rewriting call is unavailable."""
+    q_lower = query.lower()
+    for d in KNOWN_DISEASE_TERMS:
+        if re.search(r"\b" + re.escape(d) + r"\b", q_lower):
+            return query
+    for turn in reversed(history or []):
+        content = (turn.get("content") or "").lower()
+        for d in KNOWN_DISEASE_TERMS:
+            if re.search(r"\b" + re.escape(d) + r"\b", content):
+                return f"{query} {d}"
+    return query
+
+
+def contextualize_query(query, history):
+    """Rewrite follow-up questions referencing recent turns into standalone search queries."""
+    if not history:
+        return query
+    recent = history[-6:]
+    history_lines = []
+    for turn in recent:
+        role = "User" if turn.get("role") == "user" else "Assistant"
+        content = (turn.get("content") or "").strip()
+        if content:
+            history_lines.append(f"{role}: {content[:300]}")
+    if not history_lines:
+        return query
+
+    prompt = (
+        "Given the chat history and a follow-up question, rewrite the follow-up question into a "
+        "standalone search question that explicitly names the disease or health condition being discussed. "
+        "If the question is already standalone or unrelated to the history, return it exactly as is. "
+        "Do NOT answer the question. Output ONLY the standalone question text without quotes or explanation.\n\n"
+        "Chat History:\n" + "\n".join(history_lines) + "\n\n"
+        f"Follow-up Question: {query}\n\n"
+        "Standalone Question:"
+    )
+    ok, rewritten = call_groq(prompt)
+    if ok and rewritten:
+        cleaned = rewritten.strip().strip("\"'").strip()
+        if cleaned.lower().startswith("standalone question:"):
+            cleaned = cleaned[len("standalone question:"):].strip()
+        if cleaned and len(cleaned) <= MAX_QUERY_LEN:
+            return cleaned
+    return _heuristic_contextualize(query, recent)
+
+
 def build_grounded_prompt(query, chunks, history=None):
     context = "\n\n".join(f"[{i+1}] {c['text']}" for i, c in enumerate(chunks))
 
@@ -263,8 +318,8 @@ def _result(path, answer, chunks=None, best=None, err="", body=None, sources=Non
     """body = the answer text alone (what a web page shows); answer = body + sources +
     disclaimer as one string (what the command-line tools print)."""
     return {"path": path, "answer": answer, "body": answer if body is None else body,
-            "sources": sources or [], "chunks": chunks or [],
-            "best_distance": best, "error_detail": err, "emergency_kind": kind}
+        "sources": sources or [], "chunks": chunks or [],
+        "best_distance": best, "error_detail": err, "emergency_kind": kind}
 
 
 def _source_list(chunks):
@@ -290,8 +345,19 @@ def answer_question(query, history=None):
         log_interaction(query, "emergency", msg)
         return _result("emergency", msg, kind=kind)
 
+    # Use conversation history to contextualize follow-up questions for semantic retrieval
+    search_query = query
+    if history:
+        search_query = contextualize_query(query, history)
+        if search_query != query:
+            contextual_kind = check_emergency(search_query)
+            if contextual_kind:
+                msg = SELF_HARM_ESCALATION if contextual_kind == "self_harm" else MEDICAL_ESCALATION
+                log_interaction(query, "emergency", msg)
+                return _result("emergency", msg, kind=contextual_kind)
+
     try:
-        chunks = retrieve_chunks(query)
+        chunks = retrieve_chunks(search_query)
     except Exception as e:
         msg = "Sorry, the knowledge base is not available right now. Please try again later."
         log_interaction(query, "error", msg)
