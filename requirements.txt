@@ -1,9 +1,10 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+chromadb>=0.4.22
+sentence-transformers>=2.5.0
+requests>=2.31.0
+pydantic>=2.6.0
+python-dotenv>=1.0.0
+langchain-text-splitters
 PyMuPDF
 python-docx
-python-dotenv
-chromadb
-sentence-transformers
-langchain-text-splitters
-requests
-fastapi
-uvicorn

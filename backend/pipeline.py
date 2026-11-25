@@ -138,6 +138,7 @@ def check_emergency(query):
 
 # ------------------------------------------------------------------ logging --
 def _init_db():
+    Path(LOG_DB).resolve().parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(LOG_DB)
     con.execute("""CREATE TABLE IF NOT EXISTS interactions(
         id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, query TEXT, path TEXT,
@@ -175,14 +176,24 @@ def get_collection():
     global _collection
     if _collection is None:
         import chromadb
-        _collection = chromadb.PersistentClient(path=CHROMA_DIR).get_collection(COLLECTION_NAME)
+        Path(CHROMA_DIR).resolve().mkdir(parents=True, exist_ok=True)
+        client = chromadb.PersistentClient(path=str(Path(CHROMA_DIR).resolve()))
+        try:
+            _collection = client.get_collection(COLLECTION_NAME)
+        except Exception:
+            _collection = client.get_or_create_collection(COLLECTION_NAME)
     return _collection
 
 
 def retrieve_chunks(query):
+    col = get_collection()
+    if col.count() == 0:
+        return []
     emb = get_embed_model().encode([query]).tolist()
-    res = get_collection().query(query_embeddings=emb, n_results=TOP_K)
+    res = col.query(query_embeddings=emb, n_results=TOP_K)
     chunks = []
+    if not res.get("ids") or not res["ids"][0]:
+        return []
     for i in range(len(res["ids"][0])):
         meta = res["metadatas"][0][i]
         chunks.append({"text": res["documents"][0][i], "distance": res["distances"][0][i],

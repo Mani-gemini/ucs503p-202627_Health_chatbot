@@ -35,6 +35,7 @@ if str(PROJECT_ROOT / "backend") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "backend"))
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware                     # noqa: E402
 from fastapi.responses import FileResponse                             # noqa: E402
 from fastapi.staticfiles import StaticFiles                            # noqa: E402
 from pydantic import BaseModel, Field                                  # noqa: E402
@@ -59,7 +60,17 @@ async def lifespan(app):
     print("Loading embedding model and knowledge base (first start takes a little while) ...")
     try:
         pipeline.get_embed_model()
-        n = pipeline.get_collection().count()
+        col = pipeline.get_collection()
+        n = col.count()
+        if n == 0:
+            print("Knowledge base is empty. Running initial ingestion from FINAL_DATASET.json...")
+            try:
+                from ingest import main as run_ingest
+                run_ingest()
+                pipeline._collection = None  # refresh collection
+                n = pipeline.get_collection().count()
+            except Exception as ie:
+                print(f"Initial ingestion attempt encountered an issue: {ie}")
         print(f"Ready. {n} chunks in the knowledge base.")
     except Exception as e:  # server still starts, /api/health will show the problem
         print(f"WARNING: knowledge base not ready: {e}")
@@ -81,6 +92,17 @@ async def lifespan(app):
 
 
 app = FastAPI(title="HealthBot AI", version="1.0", lifespan=lifespan)
+
+cors_origins_raw = os.environ.get("CORS_ORIGINS", "*")
+cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()] if cors_origins_raw != "*" else ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")
