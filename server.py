@@ -25,10 +25,14 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import sys
+from dotenv import load_dotenv
+
 BASE = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE.parent if BASE.name == "backend" else BASE
 os.chdir(PROJECT_ROOT)   # pipeline.py uses relative paths (./chroma_db, query_log.db)
-import sys
+load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 if str(PROJECT_ROOT / "backend") not in sys.path:
