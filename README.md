@@ -1,5 +1,7 @@
 # HealthBot AI: AI-Driven Public Health Chatbot for Disease Awareness
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Mani-gemini/ucs503p-202627_Health_chatbot)
+
 A modular, verified AI health-awareness chatbot engineered with Knowledge Base Ingestion, Vector Database Semantic Search, Safety/Emergency Escalation Guardrails, Groq-powered RAG Response Generation, and a FastAPI Delivery Backend with an Admin Dashboard.
 
 Project for **UCS503P** — *Thapar Institute of Engineering and Technology*.
