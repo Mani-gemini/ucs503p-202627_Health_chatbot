@@ -384,6 +384,14 @@ def answer_question(query, history=None):
 
     ok, text = call_groq(build_grounded_prompt(query, chunks, history))
     if not ok:
+        if not os.environ.get("GROQ_API_KEY"):
+            # Direct verified retrieval delivery when GROQ_API_KEY is not configured:
+            # Deliver verified WHO/CDC medical knowledge directly from ChromaDB
+            retrieved_text = "\n\n".join(c["text"] for c in chunks[:2])
+            final = format_final_answer(retrieved_text, chunks)
+            log_interaction(query, "answer", final, best,
+                            "; ".join(sorted({f"{c['disease']}/{c['section']}" for c in chunks})))
+            return _result("answer", final, chunks, best, body=retrieved_text, sources=_source_list(chunks))
         msg = "Sorry, I couldn't generate an answer right now. Please try again in a moment."
         log_interaction(query, "error", msg, best)
         return _result("error", msg, chunks, best, err=text)
